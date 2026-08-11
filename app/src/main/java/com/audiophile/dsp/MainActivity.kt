@@ -26,20 +26,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -65,6 +64,8 @@ import com.audiophile.dsp.ui.components.BandSlider
 import com.audiophile.dsp.ui.components.CrossfeedDial
 import com.audiophile.dsp.ui.components.ProfileChip
 import com.audiophile.dsp.ui.components.SpectrumGraph
+import com.audiophile.dsp.ui.components.TrackNowPlayingCard
+import com.audiophile.dsp.ui.components.VuMeter
 import com.audiophile.dsp.ui.theme.AudiophileDSPTheme
 import com.audiophile.dsp.ui.theme.DarkBackground
 import com.audiophile.dsp.ui.theme.DarkCardBorder
@@ -161,7 +162,7 @@ fun AudiophileDspScreen(viewModel: MainViewModel) {
                         letterSpacing = 1.sp
                     )
                     Text(
-                        text = "AI Sound Enhancement Engine",
+                        text = "AI System-Wide Sound Enhancer",
                         fontSize = 12.sp,
                         color = TextMuted
                     )
@@ -181,7 +182,22 @@ fun AudiophileDspScreen(viewModel: MainViewModel) {
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // --- Real-Time Stereo VU Level Meter ---
+        VuMeter(
+            isEnabled = state.isEnabled,
+            isClipping = state.isClipping
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // --- Now Playing & Genre Classification Card ---
+        TrackNowPlayingCard(
+            genreBadge = if (state.isAutoSongMoodEnabled) "Auto-Genre: Active" else "Universal Audiophile"
+        )
+
+        Spacer(modifier = Modifier.height(14.dp))
 
         // --- Real-time Spectrum Response Graph ---
         SpectrumGraph(
@@ -215,7 +231,7 @@ fun AudiophileDspScreen(viewModel: MainViewModel) {
                         color = TextPrimary
                     )
                     Text(
-                        text = "Type how you want audio to feel or pick an AI preset prompt",
+                        text = "Describe desired audio feel or select an AI prompt",
                         fontSize = 11.sp,
                         color = TextMuted
                     )
@@ -228,14 +244,14 @@ fun AudiophileDspScreen(viewModel: MainViewModel) {
             OutlinedTextField(
                 value = aiPromptInput,
                 onValueChange = { aiPromptInput = it },
-                placeholder = { Text("Describe track or sound feel...", fontSize = 12.sp, color = TextMuted) },
+                placeholder = { Text("Describe sound intent (e.g. Deep EDM Gym Bass)...", fontSize = 12.sp, color = TextMuted) },
                 trailingIcon = {
                     IconButton(onClick = {
                         if (aiPromptInput.isNotBlank()) {
                             viewModel.executeAiPrompt(aiPromptInput)
                         }
                     }) {
-                        Icon(Icons.Default.Send, contentDescription = "Run AI Decision", tint = NeonCyan)
+                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Run AI Decision", tint = NeonCyan)
                     }
                 },
                 singleLine = true,
