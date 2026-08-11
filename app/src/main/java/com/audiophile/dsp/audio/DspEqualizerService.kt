@@ -15,6 +15,7 @@ import androidx.core.app.NotificationCompat
 import com.audiophile.dsp.MainActivity
 import com.audiophile.dsp.R
 import com.audiophile.dsp.model.DspState
+import com.audiophile.dsp.model.MoodProfiles
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -34,7 +35,12 @@ class DspEqualizerService : Service() {
         const val ACTION_STOP_SERVICE = "com.audiophile.dsp.ACTION_STOP_SERVICE"
         const val ACTION_ATTACH_SESSION = "com.audiophile.dsp.ACTION_ATTACH_SESSION"
         const val ACTION_DETACH_SESSION = "com.audiophile.dsp.ACTION_DETACH_SESSION"
+        const val ACTION_UPDATE_METADATA = "com.audiophile.dsp.ACTION_UPDATE_METADATA"
+
         const val EXTRA_SESSION_ID = "extra_session_id"
+        const val EXTRA_TRACK_NAME = "extra_track_name"
+        const val EXTRA_ARTIST_NAME = "extra_artist_name"
+        const val EXTRA_ALBUM_NAME = "extra_album_name"
     }
 
     inner class DspBinder : Binder() {
@@ -91,12 +97,41 @@ class DspEqualizerService : Service() {
                         Log.w(TAG, "Invalid session id: $sessionId")
                     }
                 }
+                ACTION_UPDATE_METADATA -> {
+                    val track = intent.getStringExtra(EXTRA_TRACK_NAME)
+                    val artist = intent.getStringExtra(EXTRA_ARTIST_NAME)
+                    val album = intent.getStringExtra(EXTRA_ALBUM_NAME)
+                    handleMetadataUpdate(track, artist, album)
+                }
                 else -> {
                     Log.d(TAG, "Unhandled action: $action")
                 }
             }
         }
         return START_STICKY
+    }
+
+    private fun handleMetadataUpdate(track: String?, artist: String?, album: String?) {
+        val metadata = TrackAudioAnalyzer.analyzeTrack(track, artist, album)
+        Log.i(TAG, "Detected Track Metadata: ${metadata.trackName} - ${metadata.artistName} [Genre: ${metadata.detectedGenre}]")
+
+        val currentState = _dspState.value
+        if (currentState.isAutoSongMoodEnabled) {
+            val mood = MoodProfiles.getById(metadata.autoInferredMoodId)
+            if (mood != null) {
+                updateState {
+                    it.copy(
+                        activeMoodId = mood.id,
+                        selectedProfile = "Auto-Song: ${metadata.detectedGenre}",
+                        bandGainsDb = mood.targetEqGainsDb.clone(),
+                        masterGainDb = mood.masterGainDb,
+                        crossfeedIntensity = mood.crossfeedIntensity,
+                        virtualizerStrength = mood.virtualizerStrength,
+                        isAntiSibilanceEnabled = mood.isAntiSibilanceEnabled
+                    )
+                }
+            }
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder {

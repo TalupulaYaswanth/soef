@@ -38,7 +38,7 @@
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
 
-        <!-- BroadcastReceiver for listening to global audio session broadcasts -->
+        <!-- BroadcastReceiver for listening to global audio session & metadata broadcasts -->
         <receiver
             android:name=".audio.AudioSessionReceiver"
             android:enabled="true"
@@ -46,6 +46,10 @@
             <intent-filter>
                 <action android:name="android.media.action.OPEN_AUDIO_EFFECT_SESSION" />
                 <action android:name="android.media.action.CLOSE_AUDIO_EFFECT_SESSION" />
+                <action android:name="com.android.music.metachanged" />
+                <action android:name="com.spotify.music.metachanged" />
+                <action android:name="com.htc.music.metachanged" />
+                <action android:name="fm.last.android.metachanged" />
             </intent-filter>
         </receiver>
 

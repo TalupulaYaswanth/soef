@@ -8,7 +8,7 @@ import android.util.Log
 
 /**
  * BroadcastReceiver that captures system-wide audio session registration intents
- * emitted by media playback applications (e.g. Spotify, YouTube, Poweramp, Apple Music).
+ * as well as real-time song metadata broadcasts emitted by music players.
  */
 class AudioSessionReceiver : BroadcastReceiver() {
 
@@ -22,29 +22,43 @@ class AudioSessionReceiver : BroadcastReceiver() {
         if (context == null || intent == null) return
 
         val action = intent.action ?: return
-        val sessionId = intent.getIntExtra(AudioEffect.EXTRA_AUDIO_SESSION, AudioEffect.ERROR_BAD_VALUE)
-        val packageName = intent.getStringExtra(AudioEffect.EXTRA_PACKAGE_NAME) ?: "Unknown"
+        Log.d(TAG, "Broadcast received: Action=$action")
 
-        Log.d(TAG, "Audio Effect Session Broadcast received: Action=$action, SessionId=$sessionId, Package=$packageName")
-
-        if (sessionId == AudioEffect.ERROR_BAD_VALUE || sessionId < 0) {
-            return
-        }
-
-        when (action) {
-            ACTION_OPEN_AUDIO_EFFECT -> {
-                Log.i(TAG, "Opening DSP for package $packageName on session $sessionId")
-                val serviceIntent = Intent(context, DspEqualizerService::class.java).apply {
-                    this.action = DspEqualizerService.ACTION_ATTACH_SESSION
-                    putExtra(DspEqualizerService.EXTRA_SESSION_ID, sessionId)
+        when {
+            action == ACTION_OPEN_AUDIO_EFFECT -> {
+                val sessionId = intent.getIntExtra(AudioEffect.EXTRA_AUDIO_SESSION, AudioEffect.ERROR_BAD_VALUE)
+                val packageName = intent.getStringExtra(AudioEffect.EXTRA_PACKAGE_NAME) ?: "Unknown"
+                if (sessionId >= 0) {
+                    Log.i(TAG, "Opening DSP session $sessionId for package $packageName")
+                    val serviceIntent = Intent(context, DspEqualizerService::class.java).apply {
+                        this.action = DspEqualizerService.ACTION_ATTACH_SESSION
+                        putExtra(DspEqualizerService.EXTRA_SESSION_ID, sessionId)
+                    }
+                    context.startService(serviceIntent)
                 }
-                context.startService(serviceIntent)
             }
-            ACTION_CLOSE_AUDIO_EFFECT -> {
-                Log.i(TAG, "Closing DSP session $sessionId for package $packageName")
+            action == ACTION_CLOSE_AUDIO_EFFECT -> {
+                val sessionId = intent.getIntExtra(AudioEffect.EXTRA_AUDIO_SESSION, AudioEffect.ERROR_BAD_VALUE)
+                if (sessionId > 0) {
+                    Log.i(TAG, "Closing DSP session $sessionId")
+                    val serviceIntent = Intent(context, DspEqualizerService::class.java).apply {
+                        this.action = DspEqualizerService.ACTION_DETACH_SESSION
+                        putExtra(DspEqualizerService.EXTRA_SESSION_ID, sessionId)
+                    }
+                    context.startService(serviceIntent)
+                }
+            }
+            action.endsWith(".metachanged") || action.contains("metachanged") -> {
+                val track = intent.getStringExtra("track") ?: intent.getStringExtra("trackName") ?: intent.getStringExtra("title")
+                val artist = intent.getStringExtra("artist") ?: intent.getStringExtra("artistName")
+                val album = intent.getStringExtra("album") ?: intent.getStringExtra("albumName")
+
+                Log.i(TAG, "Song metadata broadcast: Track=$track, Artist=$artist, Album=$album")
                 val serviceIntent = Intent(context, DspEqualizerService::class.java).apply {
-                    this.action = DspEqualizerService.ACTION_DETACH_SESSION
-                    putExtra(DspEqualizerService.EXTRA_SESSION_ID, sessionId)
+                    this.action = DspEqualizerService.ACTION_UPDATE_METADATA
+                    putExtra(DspEqualizerService.EXTRA_TRACK_NAME, track)
+                    putExtra(DspEqualizerService.EXTRA_ARTIST_NAME, artist)
+                    putExtra(DspEqualizerService.EXTRA_ALBUM_NAME, album)
                 }
                 context.startService(serviceIntent)
             }
