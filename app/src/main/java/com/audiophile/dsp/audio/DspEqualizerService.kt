@@ -64,8 +64,9 @@ class DspEqualizerService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        intent?.let {
-            when (it.action) {
+        if (intent != null && intent.action != null) {
+            val action = intent.action!!
+            when (action) {
                 ACTION_START_SERVICE -> {
                     Log.i(TAG, "Service started explicitly")
                 }
@@ -75,16 +76,23 @@ class DspEqualizerService : Service() {
                     stopSelf()
                 }
                 ACTION_ATTACH_SESSION -> {
-                    val sessionId = it.getIntExtra(EXTRA_SESSION_ID, -1)
+                    val sessionId = intent.getIntExtra(EXTRA_SESSION_ID, -1)
                     if (sessionId >= 0) {
                         attachSession(sessionId)
+                    } else {
+                        Log.w(TAG, "Invalid session id: $sessionId")
                     }
                 }
                 ACTION_DETACH_SESSION -> {
-                    val sessionId = it.getIntExtra(EXTRA_SESSION_ID, -1)
+                    val sessionId = intent.getIntExtra(EXTRA_SESSION_ID, -1)
                     if (sessionId > 0) {
                         detachSession(sessionId)
+                    } else {
+                        Log.w(TAG, "Invalid session id: $sessionId")
                     }
+                }
+                else -> {
+                    Log.d(TAG, "Unhandled action: $action")
                 }
             }
         }
@@ -162,7 +170,7 @@ class DspEqualizerService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Audiophile DSP Engine Active")
             .setContentText("10-Band Parametric EQ & Matrix Crossfeed Enabled")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(android.R.drawable.sym_def_app_icon)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)

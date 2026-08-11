@@ -66,19 +66,17 @@ class DynamicsEngine {
             val gainDb = state.bandGainsDb.getOrElse(bandIdx) { 0f } + state.masterGainDb
             val band = DynamicsProcessing.EqBand(
                 /* inUse */ true,
-                /* cutoffFrequency */ freq
-            ).apply {
-                gain = gainDb
-            }
+                /* cutoffFrequency */ freq,
+                /* gain */ gainDb
+            )
             eqConfig.setBand(bandIdx, band)
         }
 
-        // Limiter Config
+        // Limiter Config: (inUse: Boolean, enabled: Boolean, linkGroup: Int, attackTime: Float, releaseTime: Float, ratio: Float, threshold: Float, postGain: Float)
         val limiterConfig = DynamicsProcessing.Limiter(
             /* inUse */ state.limiterEnabled,
             /* enabled */ state.limiterEnabled,
-            /* linkChannels */ true,
-            /* channelIndex */ 0,
+            /* linkGroup */ 0,
             /* attackTime */ 1.0f,    // 1ms fast attack
             /* releaseTime */ 50.0f,   // 50ms smooth release
             /* ratio */ state.limiterRatio, // Hard limit 10:1 ratio
@@ -86,9 +84,9 @@ class DynamicsEngine {
             /* postGain */ 0.0f
         )
 
-        // Builder setup: PreEQ inUse, PreEQ bandCount, MBC inUse, MBC bandCount, PostEQ inUse, PostEQ bandCount, Limiter inUse
+        // Builder setup: (variant, channelCount, preEqInUse, preEqBandCount, mbcInUse, mbcBandCount, postEqInUse, postEqBandCount, limiterInUse)
         val builder = DynamicsProcessing.Config.Builder(
-            DynamicsProcessing.CONFIG_PREFERRED_VARIANT_MULTIBAND_DEFAULT,
+            DynamicsProcessing.VARIANT_FAVOR_FREQUENCY_RESOLUTION,
             CHANNEL_COUNT,
             /* PreEQ */ true, BAND_COUNT,
             /* MBC */ false, 0,
@@ -117,10 +115,9 @@ class DynamicsEngine {
         try {
             for (bandIdx in 0 until BAND_COUNT) {
                 val gainDb = gainsDb.getOrElse(bandIdx) { 0f } + masterGainDb
+                val band = DynamicsProcessing.EqBand(true, ISO_FREQUENCIES_HZ[bandIdx].toFloat(), gainDb)
                 for (ch in 0 until CHANNEL_COUNT) {
-                    dp.setPreEqBandAllChannelsTo(bandIdx, DynamicsProcessing.EqBand(true, ISO_FREQUENCIES_HZ[bandIdx].toFloat()).apply {
-                        gain = gainDb
-                    })
+                    dp.setPreEqBandAllChannelsTo(bandIdx, band)
                 }
             }
         } catch (e: Exception) {
@@ -148,7 +145,7 @@ class DynamicsEngine {
 
         try {
             val limiterConfig = DynamicsProcessing.Limiter(
-                enabled, enabled, true, 0, 1.0f, 50.0f, ratio, thresholdDb, 0.0f
+                enabled, enabled, 0, 1.0f, 50.0f, ratio, thresholdDb, 0.0f
             )
             for (ch in 0 until CHANNEL_COUNT) {
                 dp.setLimiterByChannelIndex(ch, limiterConfig)

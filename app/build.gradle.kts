@@ -5,12 +5,13 @@ plugins {
 
 android {
     namespace = "com.audiophile.dsp"
-    compileSdk = 34
+    compileSdk = 35
+    buildToolsVersion = "35.0.0"
 
     defaultConfig {
         applicationId = "com.audiophile.dsp"
         minSdk = 28
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
 

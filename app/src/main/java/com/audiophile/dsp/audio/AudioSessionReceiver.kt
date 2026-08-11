@@ -14,6 +14,8 @@ class AudioSessionReceiver : BroadcastReceiver() {
 
     companion object {
         private const val TAG = "AudioSessionReceiver"
+        const val ACTION_OPEN_AUDIO_EFFECT = "android.media.action.OPEN_AUDIO_EFFECT_SESSION"
+        const val ACTION_CLOSE_AUDIO_EFFECT = "android.media.action.CLOSE_AUDIO_EFFECT_SESSION"
     }
 
     override fun onReceive(context: Context?, intent: Intent?) {
@@ -30,7 +32,7 @@ class AudioSessionReceiver : BroadcastReceiver() {
         }
 
         when (action) {
-            AudioEffect.ACTION_OPEN_AUDIO_EFFECT_SESSION -> {
+            ACTION_OPEN_AUDIO_EFFECT -> {
                 Log.i(TAG, "Opening DSP for package $packageName on session $sessionId")
                 val serviceIntent = Intent(context, DspEqualizerService::class.java).apply {
                     this.action = DspEqualizerService.ACTION_ATTACH_SESSION
@@ -38,7 +40,7 @@ class AudioSessionReceiver : BroadcastReceiver() {
                 }
                 context.startService(serviceIntent)
             }
-            AudioEffect.ACTION_CLOSE_AUDIO_EFFECT_SESSION -> {
+            ACTION_CLOSE_AUDIO_EFFECT -> {
                 Log.i(TAG, "Closing DSP session $sessionId for package $packageName")
                 val serviceIntent = Intent(context, DspEqualizerService::class.java).apply {
                     this.action = DspEqualizerService.ACTION_DETACH_SESSION
