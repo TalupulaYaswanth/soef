@@ -7,6 +7,8 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.audiophile.dsp.api.GeminiApiClient
 import com.audiophile.dsp.audio.DspEqualizerService
 import com.audiophile.dsp.audio.LlmAudioEngine
 import com.audiophile.dsp.model.DacProfiles
@@ -15,6 +17,7 @@ import com.audiophile.dsp.model.MoodProfiles
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel() {
 
@@ -115,6 +118,36 @@ class MainViewModel : ViewModel() {
                 virtualizerStrength = mood.virtualizerStrength,
                 isAntiSibilanceEnabled = mood.isAntiSibilanceEnabled
             )
+        }
+    }
+
+    fun setGeminiApiKey(key: String) {
+        updateState { it.copy(geminiApiKey = key) }
+    }
+
+    fun analyzeTrackWithGemini(trackName: String, artistName: String) {
+        viewModelScope.launch {
+            updateState { it.copy(isGeminiLoading = true) }
+            val result = GeminiApiClient.analyzeSongWithGemini(
+                trackName = trackName,
+                artistName = artistName,
+                apiKey = _uiState.value.geminiApiKey
+            )
+
+            updateState {
+                it.copy(
+                    isGeminiLoading = false,
+                    selectedProfile = "Gemini AI: ${result.genre}",
+                    activeMoodId = null,
+                    lastAiPrompt = "${result.songTitle} - ${result.artist}",
+                    aiReasoningText = result.aiReasoning,
+                    bandGainsDb = result.bandGainsDb.clone(),
+                    masterGainDb = result.masterGainDb,
+                    crossfeedIntensity = result.crossfeedIntensity,
+                    virtualizerStrength = result.virtualizerStrength,
+                    isAntiSibilanceEnabled = result.isAntiSibilanceEnabled
+                )
+            }
         }
     }
 

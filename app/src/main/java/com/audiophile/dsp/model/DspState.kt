@@ -24,6 +24,9 @@ data class DspState(
     val activeMoodId: String? = null,
     val lastAiPrompt: String? = null,
     val aiReasoningText: String? = null,
+    val geminiApiKey: String? = null,
+    val isGeminiAiEnabled: Boolean = false,
+    val isGeminiLoading: Boolean = false,
     val isAntiSibilanceEnabled: Boolean = false,
     val isAutoSongMoodEnabled: Boolean = false,
     val isClipping: Boolean = false
@@ -46,6 +49,9 @@ data class DspState(
         if (activeMoodId != other.activeMoodId) return false
         if (lastAiPrompt != other.lastAiPrompt) return false
         if (aiReasoningText != other.aiReasoningText) return false
+        if (geminiApiKey != other.geminiApiKey) return false
+        if (isGeminiAiEnabled != other.isGeminiAiEnabled) return false
+        if (isGeminiLoading != other.isGeminiLoading) return false
         if (isAntiSibilanceEnabled != other.isAntiSibilanceEnabled) return false
         if (isAutoSongMoodEnabled != other.isAutoSongMoodEnabled) return false
         if (isClipping != other.isClipping) return false
@@ -66,6 +72,9 @@ data class DspState(
         result = 31 * result + (activeMoodId?.hashCode() ?: 0)
         result = 31 * result + (lastAiPrompt?.hashCode() ?: 0)
         result = 31 * result + (aiReasoningText?.hashCode() ?: 0)
+        result = 31 * result + (geminiApiKey?.hashCode() ?: 0)
+        result = 31 * result + isGeminiAiEnabled.hashCode()
+        result = 31 * result + isGeminiLoading.hashCode()
         result = 31 * result + isAntiSibilanceEnabled.hashCode()
         result = 31 * result + isAutoSongMoodEnabled.hashCode()
         result = 31 * result + isClipping.hashCode()

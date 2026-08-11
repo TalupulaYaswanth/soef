@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,9 +30,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -125,6 +130,7 @@ fun AudiophileDspScreen(viewModel: MainViewModel) {
     val state by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
     var aiPromptInput by remember { mutableStateOf("") }
+    var geminiKeyInput by remember { mutableStateOf(state.geminiApiKey ?: "") }
 
     Column(
         modifier = Modifier
@@ -162,7 +168,7 @@ fun AudiophileDspScreen(viewModel: MainViewModel) {
                         letterSpacing = 1.sp
                     )
                     Text(
-                        text = "AI System-Wide Sound Enhancer",
+                        text = "Google Gemini AI Audio Enhancer",
                         fontSize = 12.sp,
                         color = TextMuted
                     )
@@ -205,6 +211,88 @@ fun AudiophileDspScreen(viewModel: MainViewModel) {
             masterGainDb = state.masterGainDb,
             crossfeedIntensity = state.crossfeedIntensity
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // --- GOOGLE GEMINI AI DEEP MUSIC ANALYZER SECTION ---
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(DarkSurface, RoundedCornerShape(16.dp))
+                .border(1.dp, GoldAccent.copy(alpha = 0.7f), RoundedCornerShape(16.dp))
+                .padding(16.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.AutoAwesome,
+                    contentDescription = "Google Gemini AI",
+                    tint = GoldAccent
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text(
+                        text = "Google Gemini AI Deep Song Analyzer",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = "Deep acoustic & genre analysis powered by Gemini 1.5 Flash",
+                        fontSize = 11.sp,
+                        color = TextMuted
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Optional Gemini API Key input
+            OutlinedTextField(
+                value = geminiKeyInput,
+                onValueChange = {
+                    geminiKeyInput = it
+                    viewModel.setGeminiApiKey(it)
+                },
+                placeholder = { Text("Enter Gemini API Key (Optional for Cloud AI)...", fontSize = 11.sp, color = TextMuted) },
+                leadingIcon = { Icon(Icons.Default.Key, contentDescription = "API Key", tint = GoldAccent) },
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = GoldAccent,
+                    unfocusedBorderColor = DarkCardBorder,
+                    focusedTextColor = TextPrimary,
+                    unfocusedTextColor = TextPrimary
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Button(
+                onClick = {
+                    viewModel.analyzeTrackWithGemini("Current Active Track", "System Player")
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = GoldAccent,
+                    contentColor = DarkBackground
+                ),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (state.isGeminiLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = DarkBackground,
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Analyzing Song with Gemini AI...", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                } else {
+                    Icon(Icons.Default.AutoAwesome, contentDescription = "Run Gemini", modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Analyze Song with Google Gemini AI", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
