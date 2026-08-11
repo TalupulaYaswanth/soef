@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,15 +26,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -49,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.audiophile.dsp.model.DacProfiles
 import com.audiophile.dsp.model.ISO_BAND_LABELS
+import com.audiophile.dsp.model.MoodProfiles
 import com.audiophile.dsp.ui.MainViewModel
 import com.audiophile.dsp.ui.components.BandSlider
 import com.audiophile.dsp.ui.components.CrossfeedDial
@@ -72,8 +75,8 @@ class MainActivity : ComponentActivity() {
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        // Notification permission handled
+    ) { _ ->
+        // Permission handled
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -180,6 +183,107 @@ fun AudiophileDspScreen(viewModel: MainViewModel) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // --- NEURO-MOOD AUTO-DSP SECTION (Empirical Research Integration) ---
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(DarkSurface, RoundedCornerShape(16.dp))
+                .border(1.dp, GoldAccent.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                .padding(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Psychology,
+                        contentDescription = "Neuro-Mood DSP",
+                        tint = GoldAccent
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = "Neuro-Mood Dynamic Soundstage",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "Arousal-level EQ, sibilance filter & fatigue control",
+                            fontSize = 11.sp,
+                            color = TextMuted
+                        )
+                    }
+                }
+
+                Switch(
+                    checked = state.isAutoSongMoodEnabled,
+                    onCheckedChange = { viewModel.toggleAutoSongMood(it) },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = DarkBackground,
+                        checkedTrackColor = GoldAccent,
+                        uncheckedThumbColor = TextMuted,
+                        uncheckedTrackColor = DarkSurface
+                    )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Interactive Mood Chips
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                MoodProfiles.ALL_MOODS.forEach { mood ->
+                    val isSelected = state.activeMoodId == mood.id
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(if (isSelected) GoldAccent.copy(alpha = 0.25f) else DarkBackground)
+                            .border(
+                                width = 1.dp,
+                                color = if (isSelected) GoldAccent else DarkCardBorder,
+                                shape = RoundedCornerShape(20.dp)
+                            )
+                            .clickable { viewModel.selectMood(mood.id) }
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = "${mood.emoji} ${mood.name}",
+                            fontSize = 12.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) GoldAccent else TextSecondary
+                        )
+                    }
+                }
+            }
+
+            // Active Mood Psychological Description
+            val activeMoodObj = MoodProfiles.ALL_MOODS.firstOrNull { it.id == state.activeMoodId }
+            if (activeMoodObj != null) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(DarkBackground, RoundedCornerShape(10.dp))
+                        .padding(10.dp)
+                ) {
+                    Text(
+                        text = "🧠 ${activeMoodObj.psychologicalEffect}",
+                        fontSize = 11.sp,
+                        color = GoldAccent
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         // --- DAC Profile Preset Selector Bar ---
         Text(
             text = "DAC TUNING PRESETS",
@@ -199,7 +303,7 @@ fun AudiophileDspScreen(viewModel: MainViewModel) {
             DacProfiles.PRESETS.forEach { profile ->
                 ProfileChip(
                     name = profile.name,
-                    isSelected = state.selectedProfile.equals(profile.name, ignoreCase = true),
+                    isSelected = state.selectedProfile.equals(profile.name, ignoreCase = true) && state.activeMoodId == null,
                     onSelected = { viewModel.selectPreset(profile.name) }
                 )
             }

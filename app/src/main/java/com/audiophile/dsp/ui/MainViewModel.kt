@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModel
 import com.audiophile.dsp.audio.DspEqualizerService
 import com.audiophile.dsp.model.DacProfiles
 import com.audiophile.dsp.model.DspState
+import com.audiophile.dsp.model.MoodProfiles
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -66,7 +67,7 @@ class MainViewModel : ViewModel() {
         val gains = _uiState.value.bandGainsDb.clone()
         if (index in gains.indices) {
             gains[index] = gainDb
-            updateState { it.copy(bandGainsDb = gains, selectedProfile = "Custom") }
+            updateState { it.copy(bandGainsDb = gains, selectedProfile = "Custom", activeMoodId = null) }
         }
     }
 
@@ -87,11 +88,35 @@ class MainViewModel : ViewModel() {
         updateState {
             it.copy(
                 selectedProfile = profile.name,
+                activeMoodId = null,
                 bandGainsDb = profile.bandGainsDb.clone(),
                 masterGainDb = profile.masterGainDb,
                 crossfeedIntensity = profile.crossfeedIntensity,
-                virtualizerStrength = profile.virtualizerStrength
+                virtualizerStrength = profile.virtualizerStrength,
+                isAntiSibilanceEnabled = false
             )
+        }
+    }
+
+    fun selectMood(moodId: String) {
+        val mood = MoodProfiles.getById(moodId) ?: return
+        updateState {
+            it.copy(
+                activeMoodId = mood.id,
+                selectedProfile = "Mood: ${mood.name}",
+                bandGainsDb = mood.targetEqGainsDb.clone(),
+                masterGainDb = mood.masterGainDb,
+                crossfeedIntensity = mood.crossfeedIntensity,
+                virtualizerStrength = mood.virtualizerStrength,
+                isAntiSibilanceEnabled = mood.isAntiSibilanceEnabled
+            )
+        }
+    }
+
+    fun toggleAutoSongMood(enabled: Boolean) {
+        updateState { it.copy(isAutoSongMoodEnabled = enabled) }
+        if (enabled && _uiState.value.activeMoodId == null) {
+            selectMood(MoodProfiles.ENERGY_WORKOUT.id)
         }
     }
 

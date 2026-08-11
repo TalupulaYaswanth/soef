@@ -21,6 +21,9 @@ data class DspState(
     val limiterThresholdDb: Float = -0.5f,   // Peak limiter threshold in dBFS
     val limiterRatio: Float = 10.0f,         // Compression ratio for peak limiting
     val selectedProfile: String = "ESS Sabre Reference",
+    val activeMoodId: String? = null,
+    val isAntiSibilanceEnabled: Boolean = false,
+    val isAutoSongMoodEnabled: Boolean = false,
     val isClipping: Boolean = false
 ) {
     override fun equals(other: Any?): Boolean {
@@ -38,6 +41,9 @@ data class DspState(
         if (limiterThresholdDb != other.limiterThresholdDb) return false
         if (limiterRatio != other.limiterRatio) return false
         if (selectedProfile != other.selectedProfile) return false
+        if (activeMoodId != other.activeMoodId) return false
+        if (isAntiSibilanceEnabled != other.isAntiSibilanceEnabled) return false
+        if (isAutoSongMoodEnabled != other.isAutoSongMoodEnabled) return false
         if (isClipping != other.isClipping) return false
 
         return true
@@ -53,6 +59,9 @@ data class DspState(
         result = 31 * result + limiterThresholdDb.hashCode()
         result = 31 * result + limiterRatio.hashCode()
         result = 31 * result + selectedProfile.hashCode()
+        result = 31 * result + (activeMoodId?.hashCode() ?: 0)
+        result = 31 * result + isAntiSibilanceEnabled.hashCode()
+        result = 31 * result + isAutoSongMoodEnabled.hashCode()
         result = 31 * result + isClipping.hashCode()
         return result
     }
