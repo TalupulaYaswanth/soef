@@ -8,6 +8,7 @@ import android.os.IBinder
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.audiophile.dsp.audio.DspEqualizerService
+import com.audiophile.dsp.audio.LlmAudioEngine
 import com.audiophile.dsp.model.DacProfiles
 import com.audiophile.dsp.model.DspState
 import com.audiophile.dsp.model.MoodProfiles
@@ -67,7 +68,7 @@ class MainViewModel : ViewModel() {
         val gains = _uiState.value.bandGainsDb.clone()
         if (index in gains.indices) {
             gains[index] = gainDb
-            updateState { it.copy(bandGainsDb = gains, selectedProfile = "Custom", activeMoodId = null) }
+            updateState { it.copy(bandGainsDb = gains, selectedProfile = "Custom", activeMoodId = null, lastAiPrompt = null) }
         }
     }
 
@@ -89,6 +90,8 @@ class MainViewModel : ViewModel() {
             it.copy(
                 selectedProfile = profile.name,
                 activeMoodId = null,
+                lastAiPrompt = null,
+                aiReasoningText = null,
                 bandGainsDb = profile.bandGainsDb.clone(),
                 masterGainDb = profile.masterGainDb,
                 crossfeedIntensity = profile.crossfeedIntensity,
@@ -104,11 +107,32 @@ class MainViewModel : ViewModel() {
             it.copy(
                 activeMoodId = mood.id,
                 selectedProfile = "Mood: ${mood.name}",
+                lastAiPrompt = null,
+                aiReasoningText = null,
                 bandGainsDb = mood.targetEqGainsDb.clone(),
                 masterGainDb = mood.masterGainDb,
                 crossfeedIntensity = mood.crossfeedIntensity,
                 virtualizerStrength = mood.virtualizerStrength,
                 isAntiSibilanceEnabled = mood.isAntiSibilanceEnabled
+            )
+        }
+    }
+
+    fun executeAiPrompt(promptText: String) {
+        if (promptText.isBlank()) return
+        val result = LlmAudioEngine.analyzePromptAndInferDsp(promptText)
+
+        updateState {
+            it.copy(
+                selectedProfile = "AI Generated: ${result.prompt}",
+                activeMoodId = null,
+                lastAiPrompt = result.prompt,
+                aiReasoningText = result.reasoning,
+                bandGainsDb = result.bandGainsDb.clone(),
+                masterGainDb = result.masterGainDb,
+                crossfeedIntensity = result.crossfeedIntensity,
+                virtualizerStrength = result.virtualizerStrength,
+                isAntiSibilanceEnabled = result.isAntiSibilanceEnabled
             )
         }
     }

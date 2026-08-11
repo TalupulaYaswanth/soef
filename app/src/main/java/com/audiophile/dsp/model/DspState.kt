@@ -22,6 +22,8 @@ data class DspState(
     val limiterRatio: Float = 10.0f,         // Compression ratio for peak limiting
     val selectedProfile: String = "ESS Sabre Reference",
     val activeMoodId: String? = null,
+    val lastAiPrompt: String? = null,
+    val aiReasoningText: String? = null,
     val isAntiSibilanceEnabled: Boolean = false,
     val isAutoSongMoodEnabled: Boolean = false,
     val isClipping: Boolean = false
@@ -42,6 +44,8 @@ data class DspState(
         if (limiterRatio != other.limiterRatio) return false
         if (selectedProfile != other.selectedProfile) return false
         if (activeMoodId != other.activeMoodId) return false
+        if (lastAiPrompt != other.lastAiPrompt) return false
+        if (aiReasoningText != other.aiReasoningText) return false
         if (isAntiSibilanceEnabled != other.isAntiSibilanceEnabled) return false
         if (isAutoSongMoodEnabled != other.isAutoSongMoodEnabled) return false
         if (isClipping != other.isClipping) return false
@@ -60,6 +64,8 @@ data class DspState(
         result = 31 * result + limiterRatio.hashCode()
         result = 31 * result + selectedProfile.hashCode()
         result = 31 * result + (activeMoodId?.hashCode() ?: 0)
+        result = 31 * result + (lastAiPrompt?.hashCode() ?: 0)
+        result = 31 * result + (aiReasoningText?.hashCode() ?: 0)
         result = 31 * result + isAntiSibilanceEnabled.hashCode()
         result = 31 * result + isAutoSongMoodEnabled.hashCode()
         result = 31 * result + isClipping.hashCode()

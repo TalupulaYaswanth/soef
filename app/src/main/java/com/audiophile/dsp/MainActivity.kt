@@ -29,10 +29,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Psychology
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -42,6 +46,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,6 +56,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import com.audiophile.dsp.audio.LlmAudioEngine
 import com.audiophile.dsp.model.DacProfiles
 import com.audiophile.dsp.model.ISO_BAND_LABELS
 import com.audiophile.dsp.model.MoodProfiles
@@ -115,6 +123,7 @@ class MainActivity : ComponentActivity() {
 fun AudiophileDspScreen(viewModel: MainViewModel) {
     val state by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
+    var aiPromptInput by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -152,7 +161,7 @@ fun AudiophileDspScreen(viewModel: MainViewModel) {
                         letterSpacing = 1.sp
                     )
                     Text(
-                        text = "Portable DAC/Amp Emulator",
+                        text = "AI Sound Enhancement Engine",
                         fontSize = 12.sp,
                         color = TextMuted
                     )
@@ -183,7 +192,120 @@ fun AudiophileDspScreen(viewModel: MainViewModel) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- NEURO-MOOD AUTO-DSP SECTION (Empirical Research Integration) ---
+        // --- AI / LLM AUDIO DECISION ENGINE SECTION ---
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(DarkSurface, RoundedCornerShape(16.dp))
+                .border(1.dp, NeonCyan.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
+                .padding(16.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.AutoAwesome,
+                    contentDescription = "AI Audio Engine",
+                    tint = NeonCyan
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text(
+                        text = "AI LLM Sound Intelligence",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = "Type how you want audio to feel or pick an AI preset prompt",
+                        fontSize = 11.sp,
+                        color = TextMuted
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Text Input Field for AI Audio Prompts
+            OutlinedTextField(
+                value = aiPromptInput,
+                onValueChange = { aiPromptInput = it },
+                placeholder = { Text("Describe track or sound feel...", fontSize = 12.sp, color = TextMuted) },
+                trailingIcon = {
+                    IconButton(onClick = {
+                        if (aiPromptInput.isNotBlank()) {
+                            viewModel.executeAiPrompt(aiPromptInput)
+                        }
+                    }) {
+                        Icon(Icons.Default.Send, contentDescription = "Run AI Decision", tint = NeonCyan)
+                    }
+                },
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = NeonCyan,
+                    unfocusedBorderColor = DarkCardBorder,
+                    focusedTextColor = TextPrimary,
+                    unfocusedTextColor = TextPrimary
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // AI Prompt Chips
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                LlmAudioEngine.PRESET_PROMPTS.forEach { prompt ->
+                    val isSelected = state.lastAiPrompt == prompt
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(if (isSelected) NeonCyan.copy(alpha = 0.25f) else DarkBackground)
+                            .border(
+                                width = 1.dp,
+                                color = if (isSelected) NeonCyan else DarkCardBorder,
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                            .clickable {
+                                aiPromptInput = prompt
+                                viewModel.executeAiPrompt(prompt)
+                            }
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = prompt,
+                            fontSize = 11.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isSelected) NeonCyan else TextSecondary
+                        )
+                    }
+                }
+            }
+
+            // AI Decision Reasoning Box
+            if (state.aiReasoningText != null) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(DarkBackground, RoundedCornerShape(10.dp))
+                        .border(1.dp, NeonCyan.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                        .padding(10.dp)
+                ) {
+                    Text(
+                        text = state.aiReasoningText!!,
+                        fontSize = 11.sp,
+                        color = NeonCyan
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // --- NEURO-MOOD AUTO-DSP SECTION ---
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -303,7 +425,7 @@ fun AudiophileDspScreen(viewModel: MainViewModel) {
             DacProfiles.PRESETS.forEach { profile ->
                 ProfileChip(
                     name = profile.name,
-                    isSelected = state.selectedProfile.equals(profile.name, ignoreCase = true) && state.activeMoodId == null,
+                    isSelected = state.selectedProfile.equals(profile.name, ignoreCase = true) && state.activeMoodId == null && state.lastAiPrompt == null,
                     onSelected = { viewModel.selectPreset(profile.name) }
                 )
             }
